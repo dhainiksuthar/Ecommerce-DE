@@ -16,6 +16,6 @@ producer = KafkaProducer(
             retry_backoff_ms=1000,
             acks='all',
         )
-print(f"Connected to Kafka: {bootstrap_servers}")
+print(f"Connected to Kafka: {KAFKA_BOOTSTRAP_SERVERS}")
 
 producer.send(CLICKSTREAM_TOPIC, value="Val", key="key")

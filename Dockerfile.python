@@ -11,9 +11,3 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements and install them
 RUN pip install --no-cache-dir kafka-python
-
-# Copy the actual script
-COPY ./event-generator/producer.py .
-
-# Run the script
-CMD ["python", "producer.py"]

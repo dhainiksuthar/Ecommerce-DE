@@ -90,13 +90,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.python
+    volumes:
+      - ./event-generator:/app/scripts
+    working_dir: /app/scripts
+    command: python -u producer.py
     depends_on:
       kafka:
         condition: service_healthy
     environment:
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS = kafka:9093
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9093
   spark:
-    image: docker.io/bitnami/spark:4.1
+    image: docker.io/bitnamilegacy/spark:3.5
     environment:
       - SPARK_MODE=master
       - SPARK_RPC_AUTHENTICATION_ENABLED=no
@@ -113,7 +117,7 @@ services:
       retries: 5
       start_period: 10s
   spark-worker:
-    image: docker.io/bitnami/spark:4.1
+    image: docker.io/bitnamilegacy/spark:3.5
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark:7077
@@ -124,11 +128,11 @@ services:
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
       - SPARK_USER=spark
-    depend_on:
+    depends_on:
       spark:
         condition: service_healthy
   kafka:
-    image: docker.io/bitnami/kafka:4.2
+    image: docker.io/bitnamilegacy/kafka:3.8
     ports:
       - "9092:9092"
     volumes:
@@ -137,7 +141,7 @@ services:
       # KRaft settings
       - KAFKA_CFG_NODE_ID=0
       - KAFKA_CFG_PROCESS_ROLES=controller,broker
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9094
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       # Listeners Definition
       # 9092 = For your laptop (External)
@@ -149,19 +153,20 @@ services:
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
       - ALLOW_PLAINTEXT_LISTENER=yes
     healthcheck:
-      test: [ "CMD", "kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092" ]
+      test: [ "CMD", "kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9093" ]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 40s
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     ports:
       - "8081:8080"
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9093
       - DYNAMIC_CONFIG_ENABLED=true
-    depend_on:
+    depends_on:
       kafka:
         condition: service_healthy
   postgres:
@@ -411,3 +416,4 @@ services:
 
 volumes:
   postgres-db-volume:
+  kafka_data: {}
